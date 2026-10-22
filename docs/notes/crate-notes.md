@@ -550,3 +550,5 @@ Core 在原生英文查询入口接入 `engine/query/translation.rs`，精确查
 TSF 正常诊断不记录按键、组词或提交正文，含断连、失焦、点击与无上下文失败分支。`ClientError::Unexpected` 仅保存静态错误描述。上游显式输入日志和详细调试能力保留。完整离线预设由 `offline_windows_config` 从原生模板生成，不启动服务或解析密钥；正式资源仍按 `tools/release/data.lock` 构建，见 [组件说明](windows-full-restoration.md)。
 
 `Translation`、源表/个人表和离线导入导出保留全部有效 `Sense`；一/两义 `.qj` 写 v1，多义释义表写 v2，新读器兼容 v1，旧读器拒绝 v2，文件边界按 u16/u32 检查。may 有“可能、可以、五月”三个独立候选，既有分页、快捷键、去重和个人排序保留。详见 [多义项兼容](multiple-senses.md)。
+
+Windows Server 的英译中集成测试显式使用 Windows 应用名单；测试可在 Linux CI 上运行，不继承宿主平台的应用缺省值，也不更改产品默认配置。

@@ -4,8 +4,9 @@ mod choices;
 mod failures;
 
 use crate::support::{
-    AssemblySpec, ClientMessage, ENGLISH, KeyEvent, Router, RouterConfig, SESSION, ServerMessage,
-    assembly, candidate_texts, open_session, press, type_english,
+    AppsConfig, AssemblySpec, ClientMessage, DEFAULT_ENGLISH_CANDIDATES_ON_WINDOWS, ENGLISH,
+    KeyEvent, Router, RouterConfig, SESSION, ServerMessage, assembly, candidate_texts,
+    open_session, press, type_english,
 };
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -34,6 +35,7 @@ fn router(dir: &Path) -> Router {
         engine,
         RouterConfig {
             english_to_chinese: true,
+            apps: AppsConfig::with_english_candidates_on(DEFAULT_ENGLISH_CANDIDATES_ON_WINDOWS),
             ..RouterConfig::default()
         },
     );

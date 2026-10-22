@@ -4,9 +4,9 @@ use qingjian_core::{CandidateKind, Engine, PartOfSpeech, Translator};
 use qingjian_translate::Glossary;
 
 use crate::support::{
-    AssemblySpec, ENGLISH, KeyEvent, KeyModifiers, KeyOutcome, Language, PathBuf, Router,
-    RouterConfig, SESSION, assembly, candidate_texts, function_key, open_session, preedit, press,
-    type_english, type_letters,
+    AppsConfig, AssemblySpec, DEFAULT_ENGLISH_CANDIDATES_ON_WINDOWS, ENGLISH, KeyEvent,
+    KeyModifiers, KeyOutcome, Language, PathBuf, Router, RouterConfig, SESSION, assembly,
+    candidate_texts, function_key, open_session, preedit, press, type_english, type_letters,
 };
 
 fn engine() -> Engine {
@@ -28,6 +28,7 @@ fn router() -> Router {
         engine(),
         RouterConfig {
             english_to_chinese: true,
+            apps: AppsConfig::with_english_candidates_on(DEFAULT_ENGLISH_CANDIDATES_ON_WINDOWS),
             ..RouterConfig::default()
         },
     );
@@ -222,6 +223,7 @@ fn may_three_senses_are_full_candidates_over_existing_pages() {
         engine(),
         RouterConfig {
             english_to_chinese: true,
+            apps: AppsConfig::with_english_candidates_on(DEFAULT_ENGLISH_CANDIDATES_ON_WINDOWS),
             page_size: 1,
             ..RouterConfig::default()
         },
