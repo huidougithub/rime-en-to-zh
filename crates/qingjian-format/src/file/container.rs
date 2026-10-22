@@ -7,8 +7,8 @@ use memmap2::Mmap;
 use zerocopy::{FromBytes, Immutable, KnownLayout};
 
 use crate::{
-    FORMAT_VERSION, FormatError, Header, Kind, MAGIC, META_TAG, Metadata, SECTION_ALIGN,
-    SectionEntry, Table, Text,
+    FORMAT_VERSION, FormatError, GLOSSARY_MULTISENSE_VERSION, Header, Kind, MAGIC, META_TAG,
+    Metadata, SECTION_ALIGN, SectionEntry, Table, Text,
 };
 
 /// 打开的 `.qj` 文件：整个文件一次 mmap，分节按标签取。
@@ -19,6 +19,9 @@ pub struct Container {
 
     /// 数据种类。
     kind: Kind,
+
+    /// 实际文件版本，释义表层据此校验义项语义。
+    format_version: u16,
 
     /// 标签 → (偏移, 长度)。
     sections: HashMap<[u8; 4], (usize, usize)>,
@@ -56,7 +59,10 @@ impl Container {
         if header.magic != MAGIC {
             return Err(FormatError::BadMagic);
         }
-        if header.version != FORMAT_VERSION {
+        if header.version != FORMAT_VERSION
+            && !(header.version == GLOSSARY_MULTISENSE_VERSION
+                && header.kind == Kind::Glossary.code())
+        {
             return Err(FormatError::UnsupportedVersion(header.version));
         }
         let kind = Kind::from_code(header.kind).ok_or(FormatError::WrongKind {
@@ -70,8 +76,12 @@ impl Container {
             });
         }
         let count = header.section_count as usize;
+        let table_end = count
+            .checked_mul(SectionEntry::SIZE)
+            .and_then(|size| Header::SIZE.checked_add(size))
+            .ok_or(FormatError::Truncated)?;
         let table_bytes = map
-            .get(Header::SIZE..Header::SIZE + count * SectionEntry::SIZE)
+            .get(Header::SIZE..table_end)
             .ok_or(FormatError::Truncated)?;
         let entries =
             <[SectionEntry]>::ref_from_bytes(table_bytes).map_err(|_| FormatError::Truncated)?;
@@ -98,6 +108,7 @@ impl Container {
         Ok(Self {
             map,
             kind,
+            format_version: header.version,
             sections,
             metadata,
         })
@@ -105,6 +116,10 @@ impl Container {
 
     pub fn kind(&self) -> Kind {
         self.kind
+    }
+
+    pub fn format_version(&self) -> u16 {
+        self.format_version
     }
 
     pub fn metadata(&self) -> &Metadata {

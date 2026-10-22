@@ -62,6 +62,7 @@ fn general_and_shortcut_sections_parse() {
     assert_eq!(config.general.preedit, PreeditMode::Window);
     assert_eq!(config.general.learning_language, "en");
     assert!(config.general.english_candidates);
+    assert!(!config.general.english_to_chinese);
     assert_eq!(config.general.emoji, EmojiCount::new(3));
     assert_eq!(config.general.kaomoji, EmojiCount::new(1));
     assert_eq!(config.general.symbols, EmojiCount::new(1));

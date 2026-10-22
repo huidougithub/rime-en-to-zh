@@ -11,19 +11,19 @@ pub struct GlossEntry {
     /// 词性缩写（`n.` / `v.` …，Core `PartOfSpeech` 认得的那套）；模型给不出就没有。
     pub pos: Option<String>,
 
-    /// 英文译词，最多两个，按常用度。
+    /// 英文译词，保留全部，按常用度。
     #[serde(default)]
     pub en: Vec<String>,
 
-    /// 日文译词，最多两个，按常用度。
+    /// 日文译词，保留全部，按常用度。
     #[serde(default)]
     pub ja: Vec<JapaneseSense>,
 
-    /// 越南文译词，最多两个，按常用度。
+    /// 越南文译词，保留全部，按常用度。
     #[serde(default)]
     pub vi: Vec<String>,
 
-    /// 德文译词，最多两个，按常用度；名词含定冠词（`die Schule`）。
+    /// 德文译词，保留全部，按常用度；名词含定冠词（`die Schule`）。
     #[serde(default)]
     pub de: Vec<String>,
 }

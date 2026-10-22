@@ -1,3 +1,5 @@
+> **青简英译中开发分支**：此仓库已从旧 Rime 项目迁移为青简源码分支，仓库名 `rime-en-to-zh` 暂保留。基于 [官方青简](https://github.com/qingjian-team/qingjian)，完整保留上游历史、功能和许可；新增可选 Windows 英译中、多义项与个人译词排序。下方下载链接指向官方上游，不是本分支安装包。见 [分支与许可说明](FORK-NOTICE.md)、[实现说明](docs/notes/english-to-chinese-prototype.md)。
+
 <p align="center"><a href="README.md">简体中文</a> | <a href="README.en.md">English</a></p>
 
 <p align="center">

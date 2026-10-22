@@ -11,6 +11,7 @@ mod key_hint;
 mod message;
 mod mode;
 mod panel;
+mod receipts;
 mod reload;
 mod rescore;
 mod schemes;
@@ -76,6 +77,9 @@ pub struct Router {
 
     /// 「翻译选中文字」请求号计数器。
     selection_seq: u64,
+
+    /// 仅用于英译中偏好的文档提交确认。
+    receipts: receipts::CommitReceipts,
 
     /// 整句补全（preedit 右侧、Tab 上屏）；缓冲变化时清空。
     sentence: Option<String>,
@@ -156,7 +160,8 @@ pub struct Router {
 }
 
 impl Router {
-    pub fn new(engine: Engine, config: RouterConfig) -> Self {
+    pub fn new(mut engine: Engine, config: RouterConfig) -> Self {
+        engine.set_english_to_chinese(config.english_to_chinese);
         let english = config.english_mode && config.default_english;
         Self {
             engine,
@@ -171,6 +176,7 @@ impl Router {
             pending_selection: None,
             clicked: None,
             selection_seq: 0,
+            receipts: receipts::CommitReceipts::default(),
             sentence: None,
             notice: None,
             highlight: 0,

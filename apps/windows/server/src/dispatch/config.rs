@@ -65,6 +65,9 @@ pub struct RouterConfig {
     /// 英文模式给不给英文候选（`[general] english_candidates`）。
     pub english_candidates: bool,
 
+    /// 英文模式的本地精确英译中原型（`[general] english_to_chinese`）。
+    pub english_to_chinese: bool,
+
     /// 内置英文模式总开关（`[general] english_mode`）：关掉后状态条上的「中 / 英」不再切模式
     /// （切换键与语言栏按钮由 DLL 按同一项拦住，见 `com::service::mode`）。
     pub english_mode: bool,
@@ -191,6 +194,7 @@ impl From<&Config> for RouterConfig {
             page_keys: config.general.page_keys(),
             extra_page_keys: config.shortcut.extra_page_keys,
             english_candidates: config.general.english_candidates,
+            english_to_chinese: config.general.english_to_chinese,
             english_mode: config.general.english_mode,
             default_english: config.general.default_english,
             remember_mode_per_app: config.general.remember_mode_per_app,

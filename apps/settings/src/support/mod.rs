@@ -42,11 +42,17 @@ pub enum Feature {
     KeyHint,
     /// 拼音行按高亮候选显示带调拼音。
     ShowTones,
+    /// 配置文件中的英译中原型，暂不加设置页控件。
+    #[cfg_attr(
+        not(test),
+        expect(dead_code, reason = "仅登记配置文件开关，尚无设置页控件")
+    )]
+    EnglishToChinese,
 }
 
 impl Feature {
     #[cfg(test)]
-    pub const ALL: [Self; 19] = [
+    pub const ALL: [Self; 20] = [
         Self::AuxCode,
         Self::Schemes,
         Self::SwitchKeys,
@@ -66,6 +72,7 @@ impl Feature {
         Self::VocabularyTranslation,
         Self::KeyHint,
         Self::ShowTones,
+        Self::EnglishToChinese,
     ];
 
     /// 当前平台显示这一项。
@@ -113,6 +120,7 @@ impl Feature {
             Self::KeyHint => [Yes, Yes, Todo],
             // Fcitx 面板与应用里的行内拼音共用一串，还没分开
             Self::ShowTones => [Yes, Yes, Todo],
+            Self::EnglishToChinese => [Todo, Yes, Todo],
         }
     }
 
@@ -139,6 +147,7 @@ impl Feature {
             Self::VocabularyTranslation => "生词本整句翻译",
             Self::KeyHint => "双拼键位提示",
             Self::ShowTones => "拼音行显示声调",
+            Self::EnglishToChinese => "英译中原型",
         }
     }
 
@@ -173,7 +182,8 @@ impl Feature {
             | Self::EnglishPunctuation
             | Self::StatusBar
             | Self::HorizontalGrid
-            | Self::ApiUsage => &[],
+            | Self::ApiUsage
+            | Self::EnglishToChinese => &[],
         }
     }
 }

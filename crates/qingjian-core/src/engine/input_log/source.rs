@@ -49,6 +49,7 @@ impl From<CandidateKind> for InputSource {
             // 模型直接生成的也是整句，回放时与词图出的整句同一类看
             CandidateKind::Sentence | CandidateKind::Generated => Self::Sentence,
             CandidateKind::English => Self::English,
+            CandidateKind::Translation => Self::Translation,
             CandidateKind::Shortcut => Self::Shortcut,
             CandidateKind::Custom(_) => Self::Custom,
             // 颜文字、符号与 emoji 同是跟在词后面配出来的，回放时一类看

@@ -9,6 +9,6 @@ pub struct EnglishGlossEntry {
     /// 词性缩写（Core `PartOfSpeech` 认得的那套）；模型给不出就没有。
     pub pos: Option<String>,
 
-    /// 中文释义，最多两个，按常用度。
+    /// 中文释义，保留全部，按常用度。
     pub zh: Vec<String>,
 }

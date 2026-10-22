@@ -1,6 +1,6 @@
 //! 候选词数据模型。
 //!
-//! 翻译是候选词的 annotation：可选、单语言、最多 [`Translation::MAX_SENSES`] 条释义。
+//! 翻译是候选词的 annotation：可选、单语言，保留全部已收录义项。
 //! 不要把它扩展成多语言并列的结构，那会破坏「一次只学一种语言」的产品原则。
 
 mod furigana;
@@ -35,10 +35,10 @@ pub struct Candidate {
     /// 该候选对应的拼音音节，供平台层高亮已匹配部分。
     pub syllables: Vec<String>,
 
-    /// 读音（如日语假名），中文候选暂不使用。
+    /// 读音或补充标注（如日语假名）。
     pub reading: Option<String>,
 
-    /// 学习语言下的译文；查不到或尚未就绪时为 `None`。
+    /// 学习语言下的译文；英译中候选保留义项词性与英文来源。查不到或尚未就绪时为 `None`。
     pub translation: Option<Translation>,
 
     /// 候选带的辅码：筛码时是命中当前码段的那条，没在筛码（纯拼音态、辅码态空码段）时是词的

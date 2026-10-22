@@ -31,6 +31,7 @@ impl Router {
         rect: ScreenRect,
     ) -> ServerMessage {
         let empty = ServerMessage::KeyResult {
+            commit_receipt: None,
             session,
             outcome: KeyOutcome::Consumed,
             commit: None,
@@ -76,6 +77,7 @@ impl Router {
             (None, KeyOutcome::Passthrough)
         };
         ServerMessage::KeyResult {
+            commit_receipt: None,
             session,
             outcome,
             commit,

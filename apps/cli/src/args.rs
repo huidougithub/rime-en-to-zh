@@ -90,6 +90,10 @@ pub struct Args {
     #[arg(long)]
     pub english_mode: bool,
 
+    /// 本地精确英译中：英文输入，中文主候选；短语请作为一个带引号的命令行参数
+    #[arg(long, conflicts_with_all = ["predict", "replay", "eval_text", "eval_cold"])]
+    pub english_to_chinese: bool,
+
     /// 打开中文优先（配置 `[general]` chinese_first = true）：整段是英文词时中文候选排第一、英文第二，评测两种排法用
     #[arg(long)]
     pub chinese_first: bool,

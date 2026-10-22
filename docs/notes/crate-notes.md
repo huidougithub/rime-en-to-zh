@@ -537,3 +537,16 @@ Unix socket 用共享长度前缀与 Frame（当前公共版本 9，与 `PROTOCO
 候选回报绑定连接代次、上下文和服务端帧序号，仅当前聚焦页的有效释义进入 `note_displayed`，不把生成帧算作已展示。
 Linux 回包由 `dispatch/display/annotation` 给释义添加可选 `annotation`（词性与汉字段假名，`[general] translation_pos` 关掉时不带词性），Fcitx5 面板优先显示它；原始译文和快捷键提交不变，旧 Server 缺该字段时插件回退到 `text`。
 `[general] preedit` 使用已有 `both` / `inline` / `window`；没有新增 Linux 自绘配置。详见 [linux-fcitx5.md](linux-fcitx5.md)。
+
+
+## 英译中分支实现
+
+Core 在原生英文查询入口接入 `engine/query/translation.rs`，精确查询完整 ASCII 小写英文键；中文译词为 `CandidateKind::Translation`。提交前验证来源与当前释义成员，复用原有组词消耗和提交路径，不更新其他模式词频。Windows 的 `[general] english_to_chinese` 缺省关闭，CLI 用 `--english-to-chinese` 验证；引号内空格保留为短语输入，闭合后 Space 选词，未知词只保留原文。
+
+逐义来源与词性保存在既有 `translation` 元数据中，不再借用 `reading`；`translation_pos` 控制词性显示，各渲染路径只显示一次来源。英文表局部修订与词典来源见 `tests/english_to_chinese/glossary_changes.json`，固定语义样例见相邻 `cases.tsv`。
+
+个人排序复用 `Learner::record_choice` / `choice_weight` 与 `user-choices.tsv`，键为 `en-zh:` 加完整英文；只重排有效义项，不建平行存储。协议 11 的 `commit_receipt` 由 DLL 在文档写入成功后确认，Server 按会话一次消费；失败、缺失、重复、跨会话、关闭会话、私密及学习关闭不计数。成功后用原有原子写回持久化；详见 [选择接入](english-translation-choices.md)。
+
+TSF 正常诊断不记录按键、组词或提交正文，含断连、失焦、点击与无上下文失败分支。`ClientError::Unexpected` 仅保存静态错误描述。上游显式输入日志和详细调试能力保留。完整离线预设由 `offline_windows_config` 从原生模板生成，不启动服务或解析密钥；正式资源仍按 `tools/release/data.lock` 构建，见 [组件说明](windows-full-restoration.md)。
+
+`Translation`、源表/个人表和离线导入导出保留全部有效 `Sense`；一/两义 `.qj` 写 v1，多义释义表写 v2，新读器兼容 v1，旧读器拒绝 v2，文件边界按 u16/u32 检查。may 有“可能、可以、五月”三个独立候选，既有分页、快捷键、去重和个人排序保留。详见 [多义项兼容](multiple-senses.md)。

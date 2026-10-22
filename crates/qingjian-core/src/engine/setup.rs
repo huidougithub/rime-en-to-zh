@@ -435,7 +435,7 @@ impl Engine {
         &mut self.history
     }
 
-    /// 进入 / 离开英文模式。英文模式下 [`Self::query`] 只给英文词表的候选，回车与空格仍由壳原样上屏敲的字母，
+    /// 进入 / 离开英文模式：缺省给英文补全，打开英译中时给中文精确译词；壳用回车保留原文、空格选词。
     /// 不发云联想，也不把原样上屏记成「不纠这个串」。
     pub fn set_english_mode(&mut self, on: bool) {
         self.english_mode = on;
@@ -443,6 +443,15 @@ impl Engine {
 
     pub fn english_mode(&self) -> bool {
         self.english_mode
+    }
+
+    /// 可选英译中输入；只改变英文模式，不改中文拼音的候选与按键。
+    pub fn set_english_to_chinese(&mut self, on: bool) {
+        self.english_to_chinese = on;
+    }
+
+    pub fn english_translation_mode(&self) -> bool {
+        self.english_mode && self.english_to_chinese
     }
 
     /// 随包英文词表（不含用户打过的词）；没装是 `None`。

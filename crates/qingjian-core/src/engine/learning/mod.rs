@@ -265,7 +265,8 @@ impl Engine {
             | CandidateKind::Emoji
             | CandidateKind::Kaomoji
             | CandidateKind::Symbol
-            | CandidateKind::Generated => Forgotten::default(),
+            | CandidateKind::Generated
+            | CandidateKind::Translation => Forgotten::default(),
         };
         if !forgotten.is_nothing() {
             self.forget_span_cache();

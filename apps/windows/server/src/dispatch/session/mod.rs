@@ -43,6 +43,9 @@ impl Router {
 
     /// DLL 报来该会话的输入框私密与否变了：记下；是当前会话就立刻让 Engine 进 / 出私密。
     pub(super) fn set_privacy(&mut self, session: SessionId, private: bool) {
+        if private {
+            self.receipts.discard(session);
+        }
         if let Some(info) = self.sessions.get_mut(&session) {
             info.private = private;
         }

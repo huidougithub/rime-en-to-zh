@@ -21,6 +21,9 @@ pub struct KeyResponse {
     /// 本次要立即上屏到文档的文本。
     pub commit: Option<String>,
 
+    /// 文档写入后回报的编号，不包含输入内容。
+    pub commit_receipt: Option<u64>,
+
     /// 处理后的组句状态（preedit + 候选）；空帧表示收起候选窗口。
     pub frame: Frame,
 }

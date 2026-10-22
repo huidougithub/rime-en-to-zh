@@ -12,6 +12,7 @@ mod nine_key;
 mod phonetic;
 mod result;
 mod snapshot;
+mod translation;
 
 pub(crate) use english_tail::EnglishTail;
 pub use result::Query;
@@ -48,7 +49,7 @@ impl Engine {
         query.aux = self.aux_segment();
         query.held = self.held_text();
         // 辅码态只出命中码的词：自定义短语没有码，不出
-        if self.aux_filter().is_none() {
+        if self.aux_filter().is_none() && !self.english_translation_mode() {
             self.insert_custom_phrases(&mut query.candidates.items);
         }
         query.spelled = result::spelling_for(&query.segmentations, query.candidates.items.first());

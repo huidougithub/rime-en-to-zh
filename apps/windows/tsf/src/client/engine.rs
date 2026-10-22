@@ -71,11 +71,13 @@ impl<S: Read + Write> EngineClient<S> {
             ServerMessage::KeyResult {
                 outcome,
                 commit,
+                commit_receipt,
                 frame,
                 ..
             } => Ok(KeyReply::Result(KeyResponse {
                 outcome,
                 commit,
+                commit_receipt,
                 frame,
             })),
             ServerMessage::RequestSelection { request, .. } => {
@@ -102,23 +104,47 @@ impl<S: Read + Write> EngineClient<S> {
             ServerMessage::KeyResult {
                 outcome,
                 commit,
+                commit_receipt,
                 frame,
                 ..
             } => Ok(KeyResponse {
                 outcome,
                 commit,
+                commit_receipt,
                 frame,
             }),
             _ => Err(ClientError::Unexpected("expected key result for selection")),
         }
     }
 
+    /// 异步文档写入的结果；只在 Server 给过编号时发送，不回话。
+    pub fn commit_applied(&mut self, receipt: u64, applied: bool) -> Result<(), ClientError> {
+        self.send(&ClientMessage::CommitApplied {
+            session: self.session,
+            receipt,
+            applied,
+        })
+    }
+
     /// 组句期间定时拉一次云联想的异步结果，回最新一帧，外加鼠标点候选窗口上屏的文本（没点过为 `None`）。
     pub fn poll(&mut self) -> Result<(Frame, Option<String>), ClientError> {
+        self.poll_with_receipt()
+            .map(|(frame, commit, _)| (frame, commit))
+    }
+
+    /// 与 poll 相同，附带本次点击提交的确认编号。
+    pub fn poll_with_receipt(
+        &mut self,
+    ) -> Result<(Frame, Option<String>, Option<u64>), ClientError> {
         match self.call(&ClientMessage::Poll {
             session: self.session,
         })? {
-            ServerMessage::Update { frame, commit, .. } => Ok((frame, commit)),
+            ServerMessage::Update {
+                frame,
+                commit,
+                commit_receipt,
+                ..
+            } => Ok((frame, commit, commit_receipt)),
             _ => Err(ClientError::Unexpected("expected update for poll")),
         }
     }

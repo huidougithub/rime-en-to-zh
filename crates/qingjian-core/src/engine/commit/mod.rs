@@ -18,6 +18,10 @@ use std::time::Instant;
 mod chain;
 mod last;
 mod transition;
+mod translation;
+mod translation_choice;
+
+pub use translation_choice::TranslationChoice;
 
 pub(super) use chain::CommitChain;
 pub(super) use last::Choice;
@@ -37,6 +41,9 @@ impl Engine {
                 .unwrap_or_else(|| candidate.text.clone());
             candidate.translation = match candidate.kind {
                 CandidateKind::Custom(_) => None,
+                // 查询已保留当前义项词性和唯一英文来源，不反查另一张表。
+                CandidateKind::Translation => candidate.translation.clone(),
+                CandidateKind::English if self.english_translation_mode() => None,
                 // 英文候选按敲的大小写显示（Company / COMPANY），释义表键是小写
                 CandidateKind::English => self.english_translator.translate(&text).or_else(|| {
                     self.english_translator
@@ -87,6 +94,10 @@ impl Engine {
     /// 开了自动空格（[`Self::set_auto_space`]）时与上文、候选内部的中西文交界都补好空格。
     /// 面板开着时上屏的是面板里的条目：记一次使用（私密输入不记），下次打开排进「常用」。
     pub fn commit(&mut self, candidate: &Candidate) -> String {
+        self.translation_choice = None;
+        if let Some(text) = self.commit_english_translation(candidate) {
+            return text;
+        }
         if self.panel.take().is_some() && !self.private {
             self.panel_history.record(&candidate.text);
         }
@@ -179,7 +190,7 @@ impl Engine {
             }
             // 模型直接生成的整句没有音节对齐（`yongdockerbushuhenfangbian` 的 `docker` 不是拼音），
             // 按音节消耗拼音对不上，吃掉整段作用域；也因此没法拆成词记学习
-            CandidateKind::Generated => self.whole_scope(),
+            CandidateKind::Generated | CandidateKind::Translation => self.whole_scope(),
             // 英文词与快捷候选对应整段作用域；选中的英文词记次数并进个人英文词表，下次同样的前缀它靠前
             CandidateKind::English | CandidateKind::Shortcut | CandidateKind::Custom(_) => {
                 if candidate.kind == CandidateKind::English {
@@ -287,7 +298,8 @@ impl Engine {
             | CandidateKind::Emoji
             | CandidateKind::Kaomoji
             | CandidateKind::Symbol
-            | CandidateKind::Generated => self.chain.reset(),
+            | CandidateKind::Generated
+            | CandidateKind::Translation => self.chain.reset(),
         }
         // 一次整句上屏里的几个词不算分段选，只有这段拼音经过至少两次上屏才合起来看
         let phrase = if split && !buffer_left {

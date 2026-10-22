@@ -59,7 +59,12 @@ impl Router {
         } else {
             format!("「{text}」是词库里的词，也没有学习记录，没什么可删")
         };
-        tracing::info!(%message);
+        tracing::info!(
+            digit,
+            user_word = forgotten.user_word,
+            learning = forgotten.learning,
+            "候选删除操作完成"
+        );
         self.notice = Some(message);
         Effect::Changed(None)
     }

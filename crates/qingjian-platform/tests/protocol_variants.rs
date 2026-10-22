@@ -69,6 +69,16 @@ fn client_messages() -> Vec<ClientMessage> {
             event: key_event(),
         },
         ClientMessage::Commit { session },
+        ClientMessage::CommitApplied {
+            session,
+            receipt: 42,
+            applied: true,
+        },
+        ClientMessage::CommitApplied {
+            session,
+            receipt: 43,
+            applied: false,
+        },
         ClientMessage::Poll { session },
         ClientMessage::Surrounding {
             session,
@@ -116,6 +126,7 @@ fn server_messages() -> Vec<ServerMessage> {
             input: InputSettings::default(),
         },
         ServerMessage::KeyResult {
+            commit_receipt: None,
             session,
             outcome: KeyOutcome::Consumed,
             commit: None,
@@ -123,6 +134,7 @@ fn server_messages() -> Vec<ServerMessage> {
         },
         // `commit` 的 `Some` 侧：上屏时带文字。只测 `None` 的话，`Option` 的序列化形状变了没人发现。
         ServerMessage::KeyResult {
+            commit_receipt: None,
             session,
             outcome: KeyOutcome::Passthrough,
             commit: Some("上屏".to_owned()),
@@ -137,6 +149,7 @@ fn server_messages() -> Vec<ServerMessage> {
             text: None,
         },
         ServerMessage::Update {
+            commit_receipt: None,
             session,
             frame: frame(),
             commit: None,

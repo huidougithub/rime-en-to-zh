@@ -16,9 +16,6 @@ use crate::error::GlossError;
 use crate::prompt::normalize_pos;
 use crate::store::Store;
 
-/// 每个词最多留几个中文释义。
-const MAX_SENSES: usize = 2;
-
 /// 单个中文释义最多几个字：再长是解释不是对应词。
 const MAX_SENSE_CHARS: usize = 8;
 
@@ -92,7 +89,7 @@ impl Task for EnglishTask {
     }
 }
 
-/// 去空、去尾标点、限长、去重，最多两个。
+/// 去空、去尾标点、限长、去重；保留所有通过清洗的义项。
 fn clean_chinese(raw: Vec<String>) -> Vec<String> {
     let mut out: Vec<String> = Vec::new();
     for text in raw {
@@ -105,9 +102,6 @@ fn clean_chinese(raw: Vec<String>) -> Vec<String> {
             && !text.contains(['(', '（', '：', ':']);
         if ok && !out.iter().any(|o| o == text) {
             out.push(text.to_owned());
-        }
-        if out.len() == MAX_SENSES {
-            break;
         }
     }
     out
@@ -197,7 +191,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn cleans_and_limits_chinese_senses() {
+    fn cleans_chinese_senses_without_quantity_truncation() {
         let cleaned = clean_chinese(vec![
             " 开发。".to_owned(),
             "开发".to_owned(),
@@ -205,7 +199,7 @@ mod tests {
             "研制".to_owned(),
             "第三个".to_owned(),
         ]);
-        assert_eq!(cleaned, ["开发", "研制"]);
+        assert_eq!(cleaned, ["开发", "研制", "第三个"]);
     }
 
     #[test]

@@ -12,6 +12,9 @@ pub enum CandidateKind {
     /// 英文词表里的词（中英混输），上屏时吃掉整段输入。
     English,
 
+    /// 当前英文精确命中的中文译词；`reading` 保留英文来源，上屏复用译词提交。
+    Translation,
+
     /// 云联想给出的词：带全拼音节，上屏后记成用户词。
     Cloud,
 
@@ -49,7 +52,8 @@ impl CandidateKind {
     pub fn forgettable(self) -> bool {
         match self {
             Self::Chinese | Self::Code | Self::Cloud | Self::English => true,
-            Self::Shortcut
+            Self::Translation
+            | Self::Shortcut
             | Self::Custom(_)
             | Self::Emoji
             | Self::Kaomoji

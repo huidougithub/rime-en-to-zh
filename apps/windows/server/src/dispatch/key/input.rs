@@ -350,7 +350,23 @@ impl Router {
             };
             return with_prefix(raw, effect, c);
         }
+        if self.engine.english_translation_mode() {
+            let input = self.engine.composition().text();
+            let quoted = input
+                .strip_prefix('"')
+                .is_some_and(|rest| !rest.contains('"'));
+            if (c == '"' && !composing) || (quoted && (c.is_ascii_graphic() || c == ' ')) {
+                self.engine.push(c);
+                return Effect::Changed(None);
+            }
+            if composing && c == ' ' {
+                // 中文译词的提交空格只负责选词，不追加英文词间空格。
+                return Effect::Changed(Some(self.commit_highlighted()));
+            }
+        }
+        // 英译中只剩原文时，数字仍是原文的一部分（bankk1），不把它当选词键。
         if composing
+            && (!self.engine.english_translation_mode() || self.candidate_count() > 1)
             && let Some(digit) = codes::digit(event)
             && let Some(index) = self.slot_index(digit)
         {

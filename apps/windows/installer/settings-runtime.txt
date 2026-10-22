@@ -12,6 +12,7 @@ dcompi.dll
 dwmcorei.dll
 dwmscenei.dll
 dwritecore.dll
+Microsoft.Web.WebView2.Core.dll
 marshal.dll
 microsoft.directmanipulation.dll
 microsoft.graphics.imaging.dll

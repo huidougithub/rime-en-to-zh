@@ -5,7 +5,7 @@ mod kind;
 mod metadata;
 mod section_entry;
 
-pub use header::{FORMAT_VERSION, Header, MAGIC};
+pub use header::{FORMAT_VERSION, GLOSSARY_MULTISENSE_VERSION, Header, MAGIC};
 pub use kind::Kind;
 pub use metadata::Metadata;
 pub use section_entry::SectionEntry;

@@ -57,11 +57,11 @@ impl TextService_Impl {
         }
         self.shared.end_composing();
         let Some(context) = self.shared.last_context() else {
-            log(&format!("失焦上屏没有上下文，丢弃: {text:?}"));
+            log("失焦上屏没有上下文，丢弃待提交内容");
             self.shared.reset();
             return;
         };
-        log(&format!("失焦上屏: {text:?}"));
+        log("提交失焦前的待上屏内容");
         let requested = request_update(
             &context,
             self.client_id.get(),
@@ -69,6 +69,7 @@ impl TextService_Impl {
             self.shared.clone(),
             text.filter(|t| !t.is_empty()),
             String::new(),
+            None,
         );
         if let Err(error) = requested {
             log(&format!("失焦上屏的编辑会话没被受理: {error}"));
@@ -82,6 +83,7 @@ impl TextService_Impl {
         pic: Ref<ITfContext>,
         commit: Option<String>,
         preedit: String,
+        receipt: Option<u64>,
     ) {
         // 退到最后一个字母时帧已空但组句句柄还在，得跑一次把它收掉。
         if commit.is_none()
@@ -92,9 +94,7 @@ impl TextService_Impl {
             return;
         }
         let Ok(context) = pic.ok() else {
-            log(&format!(
-                "无上下文，丢弃更新: commit={commit:?} preedit={preedit:?}"
-            ));
+            log("无上下文，丢弃组句更新");
             return;
         };
         if let Err(error) = request_update(
@@ -104,6 +104,7 @@ impl TextService_Impl {
             self.shared.clone(),
             commit,
             preedit,
+            receipt,
         ) {
             log(&format!("请求组句更新失败: {error}"));
         }

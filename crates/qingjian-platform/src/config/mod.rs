@@ -262,6 +262,8 @@ animations = true
 preedit = "both"
 # 英文模式（Caps Lock 亮着）是否给英文候选：Tab 或方向键选词，空格、回车、标点仍原样上屏敲的字母；false 就是纯直通
 english_candidates = true
+# Windows 可选英译中原型；仅精确查本地表，中文为主候选
+english_to_chinese = false
 
 # 繁体输出：off 简体 / taiwan 台湾字形 / hongkong 香港字形 / standard 通用字形；三档都只换字形不换用语（软件 → 軟件）
 # 候选窗口里看到的就是转换后的字；词库与学习数据始终是简体，改回 off 之前学到的词照样在。旧版的 traditional = true 按台湾字形读

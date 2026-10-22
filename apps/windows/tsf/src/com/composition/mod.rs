@@ -40,9 +40,11 @@ pub(crate) fn apply(
     ec: u32,
     commit: Option<&str>,
     preedit: &str,
+    committed: impl FnOnce(),
 ) -> Result<()> {
     if let Some(text) = commit {
         commit_text(shared, context, ec, text)?;
+        committed();
     }
     // 一段组句里只问一次输入框状态。行内模式看组句刚起；`preedit = window` 模式应用里根本没有组句，
     // 得另用一个标记，否则每敲一键都要重读一遍光标前文、重报一次私密状态。

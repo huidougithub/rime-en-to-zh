@@ -3,9 +3,6 @@
 use qingjian_core::{FilledGloss, Language, PartOfSpeech, Sense, Translation};
 use serde::{Deserialize, Serialize};
 
-/// 每个词最多留几条译词。
-const MAX_SENSES: usize = Translation::MAX_SENSES;
-
 /// 单条英文译词最长几个字节：再长就是解释不是译词。
 const MAX_ENGLISH_BYTES: usize = 40;
 
@@ -139,9 +136,6 @@ pub fn parse_reply(content: &str, language: Language, words: &[String]) -> Vec<F
                 reading,
                 fresh: false,
             });
-            if senses.len() == MAX_SENSES {
-                break;
-            }
         }
         if !senses.is_empty() {
             out.push(FilledGloss {
@@ -336,5 +330,21 @@ mod tests {
         let prompt = system_prompt(Language::German);
         assert!(prompt.contains("德文"));
         assert!(prompt.contains("冠词"));
+    }
+
+    #[test]
+    fn valid_returned_senses_are_not_truncated_by_the_generation_hint() {
+        let content = r#"{"items":[{"w":"测试","pos":"n.","senses":[{"t":"alpha"},{"t":"beta"},{"t":"gamma"},{"t":"delta"}]}]}"#;
+        let result = parse_reply(content, Language::English, &["测试".to_owned()]);
+        assert_eq!(
+            result[0]
+                .translation
+                .senses()
+                .iter()
+                .map(|s| s.text.as_str())
+                .collect::<Vec<_>>(),
+            ["alpha", "beta", "gamma", "delta"]
+        );
+        assert!(system_prompt(Language::English).contains("1 到 2"));
     }
 }

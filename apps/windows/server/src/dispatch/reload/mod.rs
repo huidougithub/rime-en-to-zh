@@ -242,6 +242,8 @@ impl Router {
         self.engine.set_show_tones(config.general.show_tones);
         self.engine.set_chinese_first(config.general.chinese_first);
         self.engine
+            .set_english_to_chinese(config.general.english_to_chinese);
+        self.engine
             .set_emoji_limit(usize::from(config.general.emoji.get()));
         self.engine
             .set_kaomoji_limit(usize::from(config.general.kaomoji.get()));

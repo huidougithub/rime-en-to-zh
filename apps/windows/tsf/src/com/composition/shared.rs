@@ -4,6 +4,7 @@ use std::rc::Rc;
 use windows::Win32::UI::TextServices::{ITfComposition, ITfContext};
 
 use crate::com::service::SharedClient;
+use qingjian_platform::protocol::SessionId;
 
 /// `TextService`、编辑会话、组句 sink、轮询定时器之间共享的组句状态（STA 单线程，`Rc` 传递）。
 pub(crate) struct Shared {
@@ -31,6 +32,9 @@ pub(crate) struct Shared {
 
     /// 与 `TextService` 共用的引擎客户端；DLL 侧结束组句时要通知 Server 收候选窗口（它无从知晓）。
     client: SharedClient,
+
+    /// 编辑回调在 IPC 被借用时延后发送回执；只保存会话、编号与结果。
+    commit_receipts: RefCell<Vec<(SessionId, u64, bool)>>,
 }
 
 impl Shared {
@@ -44,7 +48,34 @@ impl Shared {
             server_stale: Cell::new(false),
             foreground: Cell::new(false),
             client,
+            commit_receipts: RefCell::new(Vec::new()),
         })
+    }
+
+    pub(crate) fn complete_commit(&self, owner: SessionId, receipt: u64, applied: bool) {
+        let mut pending = self.commit_receipts.borrow_mut();
+        if pending.len() >= 64 {
+            pending.remove(0);
+        }
+        pending.push((owner, receipt, applied));
+        drop(pending);
+        self.flush_commit_receipts();
+    }
+
+    pub(crate) fn flush_commit_receipts(&self) {
+        let Ok(mut guard) = self.client.try_borrow_mut() else {
+            return;
+        };
+        let Some(client) = guard.as_mut() else {
+            self.commit_receipts.borrow_mut().clear();
+            return;
+        };
+        let pending = std::mem::take(&mut *self.commit_receipts.borrow_mut());
+        for (owner, receipt, applied) in pending {
+            if owner == client.session() && client.commit_applied(receipt, applied).is_err() {
+                break;
+            }
+        }
     }
 
     pub(crate) fn foreground(&self) -> bool {

@@ -13,3 +13,5 @@ mod rescoring;
 mod shortcuts;
 mod status;
 mod support;
+mod translation;
+mod translation_learning;

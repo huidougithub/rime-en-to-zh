@@ -9,9 +9,6 @@ use std::path::Path;
 
 use crate::error::ConvertError;
 
-/// 一条译文最多保留几条释义。
-const MAX_SENSES: usize = 2;
-
 /// 释义开头出现这些就不是真正的解释。
 const META_PREFIXES: &[&str] = &[
     "variant of ",
@@ -50,11 +47,15 @@ pub fn convert(input: &Path, output: &Path) -> Result<(), ConvertError> {
             .map(clean_gloss)
             .filter(|g| !g.is_empty())
         {
-            if bucket.len() >= MAX_SENSES {
-                break;
-            }
             if is_meta(&gloss) || bucket.contains(&gloss) {
                 continue;
+            }
+            if bucket.len() == u16::MAX as usize {
+                return Err(ConvertError::Format {
+                    path: input.to_path_buf(),
+                    line: index + 1,
+                    reason: "more than u16::MAX senses for one word".to_owned(),
+                });
             }
             bucket.push(gloss);
         }

@@ -7,3 +7,6 @@
 /data
 .playwright-mcp/
 __pycache__/
+
+# Private local QA and deployment records
+/evidence/english-to-chinese/

@@ -5,14 +5,17 @@ use std::path::Path;
 use zerocopy::IntoBytes;
 
 use crate::{
-    FORMAT_VERSION, FormatError, Header, Kind, MAGIC, META_TAG, Metadata, SECTION_ALIGN,
-    SectionEntry,
+    FORMAT_VERSION, FormatError, GLOSSARY_MULTISENSE_VERSION, Header, Kind, MAGIC, META_TAG,
+    Metadata, SECTION_ALIGN, SectionEntry,
 };
 
 /// 攒分节、写文件。分节按加入顺序落盘，`META` 自动排第一。
 pub struct Writer {
     /// 数据种类。
     kind: Kind,
+
+    /// 缺省 v1；多义释义表显式选择 v2。
+    format_version: u16,
 
     /// (标签, 正文)。
     sections: Vec<([u8; 4], Vec<u8>)>,
@@ -22,8 +25,20 @@ impl Writer {
     pub fn new(kind: Kind, metadata: &Metadata) -> Result<Self, FormatError> {
         Ok(Self {
             kind,
+            format_version: FORMAT_VERSION,
             sections: vec![(META_TAG, metadata.to_toml()?.into_bytes())],
         })
+    }
+
+    /// 选择格式版本；v2 只用于释义表，不改变其他数据的格式。
+    pub fn format_version(mut self, version: u16) -> Result<Self, FormatError> {
+        if version != FORMAT_VERSION
+            && !(version == GLOSSARY_MULTISENSE_VERSION && self.kind == Kind::Glossary)
+        {
+            return Err(FormatError::UnsupportedVersion(version));
+        }
+        self.format_version = version;
+        Ok(self)
     }
 
     /// 加一节。标签在同一文件里不能重复。
@@ -55,7 +70,7 @@ impl Writer {
         let count = self.sections.len();
         let header = Header {
             magic: MAGIC,
-            version: FORMAT_VERSION,
+            version: self.format_version,
             kind: self.kind.code(),
             section_count: u32::try_from(count).map_err(|_| FormatError::Truncated)?,
             reserved: [0; 16],

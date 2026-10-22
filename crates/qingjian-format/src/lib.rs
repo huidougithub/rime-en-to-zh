@@ -19,7 +19,9 @@ mod view;
 
 pub use error::FormatError;
 pub use file::{Container, Writer};
-pub use layout::{FORMAT_VERSION, Header, Kind, MAGIC, Metadata, SectionEntry};
+pub use layout::{
+    FORMAT_VERSION, GLOSSARY_MULTISENSE_VERSION, Header, Kind, MAGIC, Metadata, SectionEntry,
+};
 pub use view::{Table, Text};
 
 /// 元数据分节的标签，每个文件的第一节。

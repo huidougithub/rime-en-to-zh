@@ -113,6 +113,10 @@ pub enum ServerMessage {
         /// 本次要立即上屏的文本（选词 / 空格上屏 / 标点等）；没有则为 `None`。
         commit: Option<String>,
 
+        /// 英译中选择的提交回执编号；旧 Server 无此字段，旧 DLL 忽略它。
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        commit_receipt: Option<u64>,
+
         /// 处理后要绘制的组句状态（preedit + 候选）；空 [`Frame`] 表示收起候选窗口。
         frame: Frame,
     },
@@ -138,6 +142,10 @@ pub enum ServerMessage {
         /// 鼠标点候选窗口上屏的文本（v8 起），DLL 写进文档；老 DLL 读不到这个字段，Server 不对它们收点击。
         #[serde(default)]
         commit: Option<String>,
+
+        /// 英译中选择的提交回执编号；旧 Server 无此字段，旧 DLL 忽略它。
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        commit_receipt: Option<u64>,
     },
 
     /// 对一次 [`super::ClientMessage::SyncMode`] 的答复：当前的全局中英模式，

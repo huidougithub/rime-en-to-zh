@@ -53,6 +53,7 @@ fn err_string(e: CodecError) -> String {
 /// 一个够用的样本消息，长度前缀按真帧算。
 fn sample_bytes() -> Vec<u8> {
     let msg = ServerMessage::KeyResult {
+        commit_receipt: None,
         session: SessionId(7),
         outcome: KeyOutcome::Consumed,
         commit: None,

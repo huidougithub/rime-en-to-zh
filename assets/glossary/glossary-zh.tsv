@@ -1,4 +1,3 @@
-# 由 qingjian-gloss-gen english 生成（LLM）：英文词的中文释义。词（小写）	[词性. ]释义	[词性. ]释义
 a	一
 aa	n. AA
 aaa	n. AAA
@@ -3125,7 +3124,7 @@ banishing	v. 驱逐
 banishment	n. 放逐
 banister	n. 栏杆
 banjo	n. 班卓琴
-bank	n. 银行
+bank	n. 银行	n. 河岸
 banked	adj. 倾斜的
 banker	n. 银行家
 bankers	n. 银行家
@@ -16965,6 +16964,7 @@ gonzalo	n. 贡萨洛
 gonzo	adj. 狂放的
 goo	n. 黏性物质
 good	adj. 好的
+good morning	int. 早上好
 goodall	n. 古道尔
 goodbye	int. 再见
 goodbyes	n. 告别
@@ -19284,6 +19284,7 @@ icarus	n. 伊卡洛斯
 icbm	n. 洲际弹道导弹
 icc	n. 国际刑事法院
 ice	n. 冰
+ice cream	n. 冰淇淋
 iceberg	n. 冰山
 icebergs	n. 冰山
 icebreaker	n. 破冰船
@@ -23242,6 +23243,7 @@ longview	n. 朗维尤
 lonnie	n. 朗尼
 loo	n. 厕所
 look	v. 看
+look up	v. 查阅	v. 好转
 lookahead	n. 前瞻
 lookalike	n. 相似的人
 lookaround	n. 环视
@@ -23604,6 +23606,7 @@ machiavelli	n. 马基雅维利
 machiavellian	adj. 马基雅维利式的
 machinations	n. 阴谋
 machine	n. 机器
+machine learning	n. 机器学习
 machined	adj. 机加工的
 machinery	n. 机器
 machines	n. 机器
@@ -24354,7 +24357,7 @@ maxine	n. 玛克辛
 maxkb	n. 最大千字节
 maxptime	n. 最大处理时间
 maxwell	n. 麦克斯韦
-may	n. 五月
+may	v. 可能	v. 可以	n. 五月
 maya	n. 玛雅
 mayan	n. 玛雅
 maybe	adv. 也许
@@ -27488,6 +27491,7 @@ ope	v. 打开
 opec	n. 石油输出国组织
 opel	n. 欧宝
 open	adj. 开着的
+open source	adj. 开源的
 openapi	n. 开放API
 openbsd	n. OpenBSD
 opencl	n. OpenCL
@@ -33802,7 +33806,7 @@ riga	n. 里加
 rigged	adj. 作弊的	adj. 操纵的
 rigging	n. 索具
 riggs	n. 里格斯
-right	adj. 正确的	adj. 右边
+right	adj. 正确的	adj. 右边的
 righteous	adj. 正义的
 righteousness	n. 正义
 rightful	adj. 合法的
@@ -35526,6 +35530,7 @@ sesame	n. 芝麻
 session	n. 会议
 sessions	n. 会议
 set	v. 设置	v. 放置
+set a record	v. 创造纪录
 setaffinity	v. 设置亲和性
 setback	n. 挫折
 setbacks	n. 挫折
@@ -39612,7 +39617,7 @@ teams	n. 团队
 teamsters	n. 卡车司机
 teamwork	n. 团队合作
 teapot	n. 茶壶
-tear	v. 撕	v. 眼泪
+tear	v. 撕	n. 眼泪
 teardown	n. 拆卸
 teardrop	n. 泪珠
 teared	v. 流泪
@@ -39959,6 +39964,7 @@ thames	n. 泰晤士河
 than	prep. 比
 thane	n. 领主
 thank	v. 感谢
+thank you	int. 谢谢
 thanked	v. 感谢
 thankful	adj. 感激的
 thankfully	adv. 感激地

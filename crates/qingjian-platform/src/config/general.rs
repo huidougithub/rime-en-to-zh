@@ -82,6 +82,9 @@ pub struct GeneralConfig {
     /// 英文模式（Caps Lock 亮着）是否给英文候选（补全与拼错纠正）。关掉就是纯直通。
     pub english_candidates: bool,
 
+    /// Windows 原型：英文模式只给当前英文的中文精确译词，缺省关闭。
+    pub english_to_chinese: bool,
+
     /// 中文模式下中英混输时中文候选总排在英文词前面。缺省关：拼音不像话的输入（`hello`）英文词排第一，
     /// 常在中文模式里打英文词的人不受影响；想要中文永远在前的自己打开。
     pub chinese_first: bool,
@@ -216,6 +219,7 @@ impl Default for GeneralConfig {
             animations: true,
             preedit: PreeditMode::default(),
             english_candidates: true,
+            english_to_chinese: false,
             chinese_first: false,
             english_in_chinese: true,
             emoji: EmojiCount::default(),

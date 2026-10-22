@@ -216,6 +216,7 @@ impl Engine {
     }
 
     pub fn clear(&mut self) {
+        self.translation_choice = None;
         self.composition.clear();
         self.held.clear();
         self.panel = None;

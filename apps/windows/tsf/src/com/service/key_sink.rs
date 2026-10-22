@@ -199,6 +199,7 @@ impl TextService_Impl {
 
     /// 把按键送给 Server 并按结果更新文档；返回吃不吃。
     fn forward_key(&self, pic: Ref<ITfContext>, event: KeyEvent) -> bool {
+        self.shared.flush_commit_receipts();
         // 没连上 Server（没起、刚重启、转发失败后的退避期）：只在「拉起宽限期」内吃「可能是在打拼音」的键，
         // 别让拼音字母漏进应用；宽限一过（Server 迟迟不来）就全放行——死键盘比漏字母难看，
         // 而且一律吃掉会表现为「按了没反应」（连不上时按 `-`、数字都没反应）。
@@ -215,12 +216,6 @@ impl TextService_Impl {
                 None => false,
             };
             let eat = eats_without_server(&event, grace);
-            if eat {
-                log(&format!(
-                    "没连上 Server，吃掉 vk={} char={:?}",
-                    event.virtual_key, event.character
-                ));
-            }
             return eat;
         }
         let Some(next) = self.query_key(&pic, event) else {
@@ -254,20 +249,9 @@ impl TextService_Impl {
                 // 翻译评审的任何键都结束评审（Server 侧已同步结束）。
                 self.shared.set_translating(false);
                 let consumed = matches!(response.outcome, KeyOutcome::Consumed);
-                let m = event.modifiers;
-                log(&format!(
-                    "收键 vk={} ctrl={} alt={} shift={} caps={} en={} char={:?} candidates={} preedit={preedit:?} consumed={consumed}",
-                    event.virtual_key,
-                    m.ctrl,
-                    m.alt,
-                    m.shift,
-                    m.caps,
-                    m.english_mode,
-                    event.character,
-                    response.frame.candidates.items.len()
-                ));
                 Next::Document {
                     commit: response.commit,
+                    receipt: response.commit_receipt,
                     preedit,
                     consumed,
                 }
@@ -300,6 +284,7 @@ impl TextService_Impl {
                 Next::Document {
                     consumed: false,
                     commit,
+                    receipt,
                     preedit,
                 },
                 Some(c),
@@ -309,7 +294,7 @@ impl TextService_Impl {
                 }
                 let mut text = commit.unwrap_or_default();
                 text.push(c);
-                self.update_document(pic, Some(text), String::new());
+                self.update_document(pic, Some(text), String::new(), receipt);
                 true
             }
             // 放行的功能键：Server 没动缓冲区，交还应用（应用处理这个键时光标可能会移）。
@@ -321,11 +306,14 @@ impl TextService_Impl {
             ) => false,
             (
                 Next::Document {
-                    commit, preedit, ..
+                    commit,
+                    preedit,
+                    receipt,
+                    ..
                 },
                 _,
             ) => {
-                self.update_document(pic, commit, preedit);
+                self.update_document(pic, commit, preedit, receipt);
                 true
             }
             // 读选区是异步的：先吃掉这个键，选区文本在回调里发给 Server。
@@ -346,6 +334,7 @@ fn digit_passthrough_native(next: &Next) -> bool {
             consumed: false,
             commit,
             preedit,
+            ..
         } if preedit.is_empty() && commit.as_ref().is_none_or(|text| text.is_empty())
     ) || matches!(next, Next::Abort)
 }
@@ -579,6 +568,7 @@ mod tests {
         assert!(passthrough_digit_to_app('3', None));
         assert!(passthrough_digit_to_app('0', Some("")));
         assert!(digit_passthrough_native(&Next::Document {
+            receipt: None,
             consumed: false,
             commit: None,
             preedit: String::new(),
@@ -588,11 +578,13 @@ mod tests {
         assert!(!passthrough_digit_to_app('-', None));
         assert!(!passthrough_digit_to_app('3', Some("hello")));
         assert!(!digit_passthrough_native(&Next::Document {
+            receipt: None,
             consumed: true,
             commit: None,
             preedit: String::new(),
         }));
         assert!(!digit_passthrough_native(&Next::Document {
+            receipt: None,
             consumed: false,
             commit: Some("hi".into()),
             preedit: String::new(),

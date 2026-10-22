@@ -33,6 +33,15 @@ pub enum ClientMessage {
         event: KeyEvent,
     },
 
+    /// 文档编辑完成后的结果通知，不携带文本，不回话。只对 Server 给出的编号有效。
+    CommitApplied {
+        session: SessionId,
+
+        receipt: u64,
+
+        applied: bool,
+    },
+
     /// 焦点离开 / 文档要求结束组句：Server 把缓冲区里的内容原样交出并清空，回 [`super::ServerMessage::Committed`]。
     Commit {
         /// 会话标识。

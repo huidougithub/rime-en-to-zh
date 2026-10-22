@@ -1,3 +1,5 @@
+> **Qingjian English-to-Chinese development fork**: this repository now contains Qingjian source; the former `rime-en-to-zh` repository name is retained. It preserves the [official upstream](https://github.com/qingjian-team/qingjian) history, features and licenses, and adds optional Windows English-to-Chinese input, multiple senses and translation-choice learning. Download links below point to the official upstream, not a fork installer. See [fork and licensing notice](FORK-NOTICE.md).
+
 <p align="center"><a href="README.md">简体中文</a> | <a href="README.en.md">English</a></p>
 
 <p align="center">

@@ -97,6 +97,16 @@ cargo run --release -p qingjian-gloss-gen -- export-english
 
 `data/generated/gloss-en-llm.jsonl` 是它的原始输出。表的键是小写，Engine 查表时把候选转小写。
 
+## 本地英译中原型修订（2026-10-21）
+
+本地分支在 `db5d6fe325580fe49adf30b7bc8a7a786aafd4f3` 上补 `bank` 的河岸义，
+把 `right` 的第二个形容词译词改为“右边的”，加入五个有限短语。
+逐条原值、新值、上游表哈希与参考链接在
+[`tests/english_to_chinese/glossary_changes.json`](../../tests/english_to_chinese/glossary_changes.json)。
+这些是 Codex AI 提出的局部修订，仍按 GPL-3.0-or-later；没有人工审校或全表准确率保证。
+固定语义样例及已知漏义见 [`cases.tsv`](../../tests/english_to_chinese/cases.tsv)。
+词典网页只作语义核对参考，没有导入网页词典数据库；其他来源与许可保持原样。
+
 ## 中间产物
 
 模型原始输出的三个 JSONL（`gloss-llm.jsonl`、`gloss-en-llm.jsonl`、`pinyin-llm.jsonl`）都在
@@ -104,3 +114,12 @@ cargo run --release -p qingjian-gloss-gen -- export-english
 发布时随 `.qj` 一起作为 Release 附件保存，重跑前先从那里下载。
 
 生成时的提示词在 `tools/gloss-gen/src/prompt.rs`（中→英 / 日 / 越 / 德）与 `tools/gloss-gen/src/english.rs`（英→中）。
+
+
+## 本地多义项兼容（2026-10-22）
+
+本地解析与内存结构保留 TSV 中全部义项及逐义词性/读音；多义英文各给独立中文主候选，沿用原分页。
+每词义项数的文件容量来自 `u16`（65,535），超界报错而不截断；不是把两义改成另一个少量上限。
+含三义及以上的编译释义表标为 `.qj` v2，防止旧程序再截成两义；新程序仍读 v1，旧一/两义表也仍写 v1。
+本轮仅给 may 补已核实的“可以”，其他词不自动生成更多释义；源词表仍有漏义和错误。
+详见 [`multiple-senses.md`](../../docs/notes/multiple-senses.md)，逐项来源仍在原有修订清单。

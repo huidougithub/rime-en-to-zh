@@ -1,0 +1,99 @@
+{
+  "upstream": "https://github.com/qingjian-team/qingjian",
+  "baseline_commit": "db5d6fe325580fe49adf30b7bc8a7a786aafd4f3",
+  "baseline_sha256": "f56b59d79947a6eff7c3e8c834cac20a052482654b91e61d6266a39c148aff5e",
+  "baseline_entries": 44924,
+  "modified_entries": 44931,
+  "license": "GPL-3.0-or-later",
+  "date": "2026-10-22",
+  "authorship": "Codex AI local proposals; not a human-reviewed dictionary; no global accuracy claim.",
+  "references": [
+    "https://dictionary.cambridge.org/us/dictionary/english-chinese-simplified/bank",
+    "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/right",
+    "https://dictionary.cambridge.org/us/dictionary/english/record",
+    "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/tear",
+    "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/may",
+    "https://www.merriam-webster.com/dictionary/may",
+    "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/look-up",
+    "https://dictionary.cambridge.org/dictionary/english-chinese-traditional/ice-cream"
+  ],
+  "changes": [
+    {
+      "key": "bank",
+      "before": "bank\tn. 银行",
+      "after": "bank\tn. 银行\tn. 河岸"
+    },
+    {
+      "key": "right",
+      "before": "right\tadj. 正确的\tadj. 右边",
+      "after": "right\tadj. 正确的\tadj. 右边的"
+    },
+    {
+      "key": "good morning",
+      "before": null,
+      "after": "good morning\tint. 早上好"
+    },
+    {
+      "key": "thank you",
+      "before": null,
+      "after": "thank you\tint. 谢谢"
+    },
+    {
+      "key": "set a record",
+      "before": null,
+      "after": "set a record\tv. 创造纪录"
+    },
+    {
+      "key": "machine learning",
+      "before": null,
+      "after": "machine learning\tn. 机器学习"
+    },
+    {
+      "key": "open source",
+      "before": null,
+      "after": "open source\tadj. 开源的"
+    },
+    {
+      "key": "tear",
+      "before": "tear\tv. 撕\tv. 眼泪",
+      "after": "tear\tv. 撕\tn. 眼泪",
+      "verified_utc": "2026-10-22",
+      "references": [
+        "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/tear"
+      ],
+      "verification": "The tears-from-eyes sense is a noun; keep both valid meanings. Verified in the official Cambridge indexed entry, not human review."
+    },
+    {
+      "key": "may",
+      "before": "may\tn. 五月",
+      "after": "may\tv. 可能\tv. 可以\tn. 五月",
+      "verified_utc": "2026-10-22",
+      "references": [
+        "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/may",
+        "https://www.merriam-webster.com/dictionary/may"
+      ],
+      "verification": "Official Cambridge and Merriam-Webster entries verify possibility and permission as auxiliary-verb meanings; retain May month. Three independent senses, in source order. Existing v. label is a coarse verb class. Wish/hawthorn remain omitted; no case-sensitive disambiguation."
+    },
+    {
+      "key": "look up",
+      "before": null,
+      "after": "look up\tv. 查阅\tv. 好转",
+      "verified_utc": "2026-10-22",
+      "references": [
+        "https://dictionary.cambridge.org/dictionary/english-chinese-simplified/look-up"
+      ],
+      "verification": "Add information lookup and improvement senses of the phrasal verb. No sentence translation, object inference or look-up-to sense; visitor and literal upward-looking senses remain omitted."
+    },
+    {
+      "key": "ice cream",
+      "before": null,
+      "after": "ice cream\tn. 冰淇淋",
+      "verified_utc": "2026-10-22",
+      "references": [
+        "https://dictionary.cambridge.org/dictionary/english-chinese-traditional/ice-cream"
+      ],
+      "verification": "Noun for the frozen sweet food. 冰淇淋 is verified in the official Cambridge Traditional Chinese entry; simplified entry also uses the synonym 冰激凌."
+    }
+  ],
+  "verification_scope": "Targeted meanings/POS verified using official dictionary indexed content and available definitions. Some direct Cambridge page fetches returned HTTP 403. No dictionary database imported, no human-reviewed or whole-table accuracy claim."
+}

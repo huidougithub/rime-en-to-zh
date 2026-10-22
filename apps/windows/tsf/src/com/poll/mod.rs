@@ -118,6 +118,7 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: 
 
 /// 组句中或翻译评审中拉云结果；否则前台时隔几拍问一次切模式（顺路取回按键行为设置）。引擎正被按键处理借用时跳过这一拍；连接坏了断开。
 fn poll_once(context: &PollContext) {
+    context.shared.flush_commit_receipts();
     let tick = context.ticks.get().wrapping_add(1);
     context.ticks.set(tick);
     let translating = context.shared.translating();
@@ -133,12 +134,12 @@ fn poll_once(context: &PollContext) {
     let Some(client) = guard.as_mut() else {
         return;
     };
-    match client.poll() {
-        Ok((frame, Some(commit))) => {
+    match client.poll_with_receipt() {
+        Ok((frame, Some(commit), receipt)) => {
             drop(guard);
-            commit_clicked(context, &frame, commit);
+            commit_clicked(context, &frame, commit, receipt);
         }
-        Ok((frame, None)) => {
+        Ok((frame, None, _)) => {
             // 翻译评审时回空帧 = 翻译已在 Server 侧结束（云端没给译文）。
             if translating && frame.is_empty() {
                 drop(guard);
@@ -158,9 +159,9 @@ fn poll_once(context: &PollContext) {
 }
 
 /// 鼠标点候选窗口上屏：与按键结果一样经异步编辑会话写进文档，剩下的拼音接着组句。
-fn commit_clicked(context: &PollContext, frame: &Frame, commit: String) {
+fn commit_clicked(context: &PollContext, frame: &Frame, commit: String, receipt: Option<u64>) {
     let Some(document) = context.shared.last_context() else {
-        log(&format!("点击上屏没有上下文，丢弃: {commit:?}"));
+        log("点击上屏没有上下文，丢弃待提交内容");
         return;
     };
     // 「只在候选窗口」模式应用里不放行内拼音，与按键路径一致
@@ -170,7 +171,7 @@ fn commit_clicked(context: &PollContext, frame: &Frame, commit: String) {
         String::new()
     };
     context.shared.set_composing(!frame.is_empty());
-    log(&format!("点击上屏: {commit:?} preedit={preedit:?}"));
+    log("处理候选点击上屏");
     if let Err(error) = request_update(
         &document,
         context.client_id,
@@ -178,6 +179,7 @@ fn commit_clicked(context: &PollContext, frame: &Frame, commit: String) {
         context.shared.clone(),
         Some(commit),
         preedit,
+        receipt,
     ) {
         log(&format!("点击上屏的编辑会话没被受理: {error}"));
     }

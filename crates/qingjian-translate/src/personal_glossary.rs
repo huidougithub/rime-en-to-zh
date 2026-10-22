@@ -6,7 +6,7 @@ use qingjian_core::storage::{read_text_lossy, write_atomic_str};
 use qingjian_core::{Language, Sense, Translation};
 
 use crate::GlossaryError;
-use crate::glossary::parse_sense;
+use crate::glossary::{parse_entry, validate_entry};
 
 /// 个人释义表：释义兜底从云端写来的释义，一种学习语言一个文件（`user-glossary-<语言>.tsv`），
 /// 格式与随包释义表相同（`词\t[词性. ]译词[|读音]…`），用户可以手改。
@@ -103,6 +103,7 @@ impl PersonalGlossary {
         let mut words: Vec<&String> = self.entries.keys().collect();
         words.sort();
         for word in words {
+            validate_entry(word, self.entries[word].senses())?;
             text.push_str(word);
             for sense in self.entries[word].senses() {
                 text.push('\t');
@@ -136,18 +137,14 @@ fn parse(language: Language, text: &str) -> HashMap<String, Translation> {
         if line.is_empty() || line.starts_with('#') {
             continue;
         }
-        let mut fields = line.split('\t').map(str::trim);
-        let word = fields.next().unwrap_or_default();
-        let senses: Vec<Sense> = fields
-            .filter(|s| !s.is_empty())
-            .take(Translation::MAX_SENSES)
-            .map(parse_sense)
-            .collect();
-        if word.is_empty() || senses.is_empty() {
-            tracing::warn!(line = number + 1, "个人释义表有坏行，跳过");
-            continue;
+        match parse_entry(language, line, number + 1) {
+            Ok((word, translation)) => {
+                entries.insert(word.to_owned(), translation);
+            }
+            Err(_) => {
+                tracing::warn!(line = number + 1, "个人释义表有坏行或超出格式容量，跳过");
+            }
         }
-        entries.insert(word.to_owned(), Translation::new(language, senses));
     }
     entries
 }
@@ -209,5 +206,36 @@ mod tests {
             "開発する"
         );
         std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn personal_senses_keep_all_pos_readings_and_order_after_reload() {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!(
+            "qingjian-personal-many-{}-{nonce}.tsv",
+            std::process::id()
+        ));
+        let senses: Vec<_> = (0..129)
+            .map(|i| Sense {
+                part_of_speech: Some(if i % 2 == 0 {
+                    PartOfSpeech::Noun
+                } else {
+                    PartOfSpeech::Verb
+                }),
+                text: format!("meaning{i}"),
+                reading: Some(format!("reading{i}")),
+                fresh: false,
+            })
+            .collect();
+        let expected = Translation::new(Language::Japanese, senses);
+        let mut glossary = PersonalGlossary::open(Language::Japanese, &path);
+        glossary.insert("word", expected.clone());
+        glossary.save().unwrap();
+        let reloaded = PersonalGlossary::open(Language::Japanese, &path);
+        assert_eq!(reloaded.translate("word"), Some(expected));
+        std::fs::remove_file(path).unwrap();
     }
 }

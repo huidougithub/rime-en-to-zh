@@ -1,6 +1,13 @@
 use super::KeyResponse;
 
 /// 一次 [`super::EngineClient::key`] 的应答。
+#[cfg_attr(
+    target_pointer_width = "64",
+    expect(
+        clippy::large_enum_variant,
+        reason = "完整回包即刻在栈上消费，避免每次按键新增堆分配"
+    )
+)]
 pub enum KeyReply {
     /// 常规处理结果。
     Result(KeyResponse),

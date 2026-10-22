@@ -32,6 +32,7 @@ impl Router {
             return;
         };
         tracing::debug!(?target, "点击上屏");
+        self.capture_translation_choice(session);
         self.deliver_clicked(session, text);
     }
 

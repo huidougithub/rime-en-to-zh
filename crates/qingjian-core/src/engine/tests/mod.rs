@@ -22,6 +22,8 @@ mod shuangpin;
 mod spacing;
 mod spelling;
 mod traditional;
+mod translation;
+mod translation_choices;
 mod vocabulary;
 mod voice;
 mod zhuyin;

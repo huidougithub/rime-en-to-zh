@@ -44,6 +44,7 @@ use qingjian_dictionary::{AuxCodeLookup, Dictionary, Match, WordList};
 pub use alignment::Alignment;
 pub use annotation::AnnotationReport;
 pub use aux_code::is_valid_aux_code_key;
+pub use commit::TranslationChoice;
 pub use commit::{LastCommit, Transition};
 pub use gloss::{FilledGloss, GlossFiller, NoGlossFiller};
 pub use input_log::{
@@ -73,7 +74,6 @@ use crate::code_scheme::CodeScheme;
 use crate::composition::Composition;
 use crate::correction::{self, Correction, TypoCosts, typo};
 use crate::emoji::EmojiTable;
-use crate::english;
 use crate::fuzzy::{Expanded, FuzzyRules};
 use crate::history::InputHistory;
 use crate::panel::{NoPanelHistory, PanelHistory, SymbolPanel};
@@ -83,7 +83,6 @@ use crate::ranking::{self, Scored};
 use crate::sentence::{
     self, Conversion, Interpolation, LanguageModel, NoLanguageModel, SentenceScorer,
 };
-use crate::shortcut;
 use crate::shuangpin::Layout;
 use crate::traditional::Traditional;
 
@@ -113,6 +112,9 @@ pub struct Engine {
     /// 用户词频，缺省为 [`NoLearner`]；私密输入期间只读不写（[`learning::MutedLearner`]）。
     learner: learning::MutedLearner,
 
+    /// 英译中上屏待平台确认的选择，不是输入历史。
+    translation_choice: Option<TranslationChoice>,
+
     /// 当前拼音缓冲区。
     composition: Composition,
 
@@ -121,6 +123,9 @@ pub struct Engine {
 
     /// 英文模式（壳里 Caps Lock 亮着）：缓冲区里的字母不当拼音，候选来自英文词表的补全与纠正。
     english_mode: bool,
+
+    /// 英文模式中使用精确的中文译词作为主候选，缺省关闭。
+    english_to_chinese: bool,
 
     /// 全角标点与引号配对状态。
     punctuation: Punctuation,
@@ -442,9 +447,11 @@ impl Engine {
             english_translator: Box::new(NoTranslator),
             modes: ModeKeys::default(),
             learner: learning::MutedLearner::new(Box::new(NoLearner)),
+            translation_choice: None,
             composition: Composition::default(),
             english: None,
             english_mode: false,
+            english_to_chinese: false,
             punctuation: Punctuation::default(),
             full_width_punctuation: true,
             custom_phrases: Vec::new(),

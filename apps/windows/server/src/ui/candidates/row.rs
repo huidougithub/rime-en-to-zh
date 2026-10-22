@@ -114,4 +114,53 @@ mod tests {
             assert_eq!(joined, "develop");
         }
     }
+
+    #[test]
+    fn translated_real_senses_show_source_once_and_follow_the_pos_switch() {
+        use qingjian_core::Engine;
+        use qingjian_dictionary::Dictionary;
+        use qingjian_translate::Glossary;
+
+        let glossary = Glossary::parse(
+            Language::Chinese,
+            include_str!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/../../../assets/glossary/glossary-zh.tsv"
+            )),
+        )
+        .unwrap();
+        let mut engine = Engine::new(Dictionary::parse("你好\tni hao\t100\n").unwrap())
+            .with_english_translator(Box::new(glossary));
+        engine.set_english_mode(true);
+        engine.set_english_to_chinese(true);
+        for (input, expected) in [
+            ("tear", vec![("撕", "v."), ("眼泪", "n.")]),
+            ("may", vec![("可能", "v."), ("可以", "v."), ("五月", "n.")]),
+            ("bank", vec![("银行", "n."), ("河岸", "n.")]),
+            ("\"look up\"", vec![("查阅", "v."), ("好转", "v.")]),
+            ("\"ice cream\"", vec![("冰淇淋", "n.")]),
+        ] {
+            engine.set_input(input);
+            let mut list = engine.query().unwrap().candidates;
+            engine.annotate(&mut list);
+            assert_eq!(list.items.len(), expected.len() + 1, "{input}");
+            for (candidate, (text, pos)) in list.items.iter().zip(expected) {
+                let wire = serde_json::to_vec(candidate).unwrap();
+                let candidate: Candidate = serde_json::from_slice(&wire).unwrap();
+                for show_pos in [true, false] {
+                    let row = from_candidate(0, &candidate, false, show_pos);
+                    assert_eq!(row.text, text);
+                    let annotation: String =
+                        row.annotation.iter().map(|(s, _)| s.as_str()).collect();
+                    let source = input.trim_matches('"');
+                    let expected = if show_pos {
+                        format!("{pos} {source}")
+                    } else {
+                        source.to_owned()
+                    };
+                    assert_eq!(annotation, expected, "{input}: {show_pos}");
+                }
+            }
+        }
+    }
 }

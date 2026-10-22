@@ -1,6 +1,12 @@
 //! 拼音以外的几种查询：表达式（`v`）、原样字母、英文模式、问字（`?`）。
 
-use super::*;
+use std::time::{Duration, Instant};
+
+use crate::candidate::{Candidate, CandidateKind, CandidateList};
+use crate::engine::{ENGLISH_MODE_CANDIDATES, Engine, Learner, Timings};
+use crate::{english, shortcut};
+
+use super::Query;
 
 impl Engine {
     /// 表达式模式（`v` 开头）：不解析拼音，候选是算式结果 / 中文数字，再加上整段是英文词的情况（`very`）。
@@ -81,6 +87,11 @@ impl Engine {
         rest: String,
         start: Instant,
     ) -> Query {
+        if self.english_translation_mode() {
+            let mut query = self.query_raw(scope, rest, start);
+            query.candidates.items = self.query_english_translations(scope);
+            return query;
+        }
         let mut items: Vec<Candidate> = english::suggest(
             &self.english_lists(),
             scope,

@@ -9,16 +9,12 @@ pub struct Translation {
     /// 译文所属的学习语言。
     pub language: Language,
 
-    /// 释义，按常用程度排序，最多 [`Self::MAX_SENSES`] 条。
+    /// 释义，保留来源顺序和全部义项；外部数据容量由读写层校验。
     senses: Vec<Sense>,
 }
 
 impl Translation {
-    /// 释义上限。超出的部分在构造时丢弃，保证候选框不会退化成迷你词典。
-    pub const MAX_SENSES: usize = 2;
-
-    pub fn new(language: Language, mut senses: Vec<Sense>) -> Self {
-        senses.truncate(Self::MAX_SENSES);
+    pub fn new(language: Language, senses: Vec<Sense>) -> Self {
         Self { language, senses }
     }
 
@@ -37,17 +33,22 @@ mod tests {
     use crate::candidate::PartOfSpeech;
 
     #[test]
-    fn keeps_at_most_two_senses() {
-        let senses = ["develop", "development", "exploit"]
-            .into_iter()
-            .map(|text| Sense {
-                part_of_speech: Some(PartOfSpeech::Verb),
-                text: text.to_owned(),
-                reading: None,
-                fresh: false,
-            })
-            .collect();
-        let translation = Translation::new(Language::English, senses);
-        assert_eq!(translation.senses().len(), Translation::MAX_SENSES);
+    fn keeps_all_senses_in_order() {
+        for count in [0, 1, 2, 3, 129] {
+            let senses: Vec<Sense> = (0..count)
+                .map(|i| Sense {
+                    part_of_speech: Some(if i % 2 == 0 {
+                        PartOfSpeech::Noun
+                    } else {
+                        PartOfSpeech::Verb
+                    }),
+                    text: format!("meaning-{i}"),
+                    reading: Some(format!("reading-{i}")),
+                    fresh: i % 2 == 0,
+                })
+                .collect();
+            let translation = Translation::new(Language::English, senses.clone());
+            assert_eq!(translation.senses(), senses, "count={count}");
+        }
     }
 }

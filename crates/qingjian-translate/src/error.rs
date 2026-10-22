@@ -14,6 +14,10 @@ pub enum GlossaryError {
         reason: String,
     },
 
+    /// 数据超过格式可表示的容量；报错而不是截断或整数回绕。
+    #[error("glossary capacity exceeded: {0}")]
+    Limit(&'static str),
+
     /// `.qj` 容器层的错误。
     #[error("glossary file: {0}")]
     Container(#[from] qingjian_format::FormatError),

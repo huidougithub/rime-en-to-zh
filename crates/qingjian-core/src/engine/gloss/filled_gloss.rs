@@ -6,6 +6,6 @@ pub struct FilledGloss {
     /// 中文词。
     pub word: String,
 
-    /// 学习语言的译词（最多两条）。
+    /// 学习语言的译词（保留返回的有效义项）。
     pub translation: Translation,
 }

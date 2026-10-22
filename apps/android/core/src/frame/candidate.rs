@@ -9,7 +9,7 @@ use super::sense::FrameSense;
 pub struct FrameCandidate {
     pub text: String,
 
-    /// 学习语言下的译文，最多两条；下标就是 `Session::select_translation` 的 `sense`。
+    /// 学习语言下的译文，按源顺序保留；下标就是 `Session::select_translation` 的 `sense`。
     pub senses: Vec<FrameSense>,
 
     /// 长按能不能删（Core 的 `CandidateKind::forgettable`）。

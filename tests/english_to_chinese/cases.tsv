@@ -1,0 +1,47 @@
+# input<TAB>exact Chinese candidates in order (| separated)<TAB>forbidden text<TAB>scope / known omissions
+studio	工作室	学习	漏义：录音室、演播室、单间公寓；不是完整词典
+Studio	工作室	学习	首字母大写仅做 ASCII 大小写折叠
+STUDIO	工作室	学习	全大写仅做 ASCII 大小写折叠
+thwart	挫败	银行	阻挠等近义表达未逐一列出
+Thwart	挫败	银行	大小写回归
+set	设置|放置	创造	漏义：一套、集合、凝固、落山等；不能删除 a record 限定
+SET	设置|放置	创造	大小写回归
+apple	苹果		只覆盖水果；不据大小写识别 Apple 公司
+Apple	苹果		专名消歧未实现
+APPLE	苹果		专名消歧未实现
+develop	开发|发展	创造	漏义：冲洗胶片、患病、使显现等
+bank	银行|河岸		本地补河岸；仍漏动词存款、倾斜等
+BANK	银行|河岸		大小写回归
+right	正确的|右边的		本地修正形容词词形；仍漏权利、恰好等
+privacy	隐私		隐私权、独处状态未单列
+Privacy	隐私		大小写回归
+hello	你好		常用词
+world	世界		常用词
+book	书		漏动词预订
+learn	学习		漏得知
+"good morning"	早上好		本地短语；闭合引号后才能提交译词
+"Good Morning"	早上好		短语大小写
+"thank you"	谢谢		本地短语
+"set a record"	创造纪录		整个限定短语才能获得该译词
+"machine learning"	机器学习		本地技术短语
+"open source"	开源的		本地短语；名词义未单列
+zqxjkvv		工作室|银行|创造	未知词只能走原文
+studi		工作室	前缀不冒充 studio
+studoi		工作室	错拼不冒充 studio
+bankk		银行|河岸	错拼不冒充 bank
+privacyxyz		隐私	未知后缀不截断
+"a record"		创造	不能从 set a record 删除 set
+"good morning		早上好	未闭合引号保留原文
+"unknown phrase zqxjkvv"			未知短语保留原文
+tear	撕|眼泪		本轮修正眼泪义为名词；仍漏裂口等义
+Tear	撕|眼泪		大小写折叠；逐义词性另由渲染回归核验
+may	可能|可以|五月		可能性、许可与月份三个独立义项；祝愿、山楂花仍漏
+May	可能|可以|五月		大小写敏感专名处理不在本轮范围
+MAY	可能|可以|五月		大小写折叠保持；不自动按上下文消歧
+"look up"	查阅|好转	仰慕	信息检索与情况改善；不是 look up to
+"Look Up"	查阅|好转	仰慕	完整短语及大小写回归
+"ice cream"	冰淇淋		冷冻甜食名词
+"Ice Cream"	冰淇淋		完整短语及大小写回归
+"look u"		查阅|好转	未知短语前缀不借用 look up 的译义
+"ice creamm"		冰淇淋	未知短语错拼保留原文
+"ice cream		冰淇淋	未闭合引号保留原文

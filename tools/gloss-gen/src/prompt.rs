@@ -5,9 +5,6 @@ use serde::Deserialize;
 
 use crate::entry::{GlossEntry, JapaneseSense};
 
-/// 每种语言最多留几个译词。
-const MAX_SENSES: usize = 2;
-
 /// 单个英文译词最长几个字节：再长就是解释不是译词。
 const MAX_ENGLISH_BYTES: usize = 40;
 
@@ -239,9 +236,6 @@ fn clean_latin_language(raw: Vec<String>, max_chars: usize, max_words: usize) ->
         if ok && !out.iter().any(|o| o.eq_ignore_ascii_case(text)) {
             out.push(text.to_owned());
         }
-        if out.len() == MAX_SENSES {
-            break;
-        }
     }
     out
 }
@@ -272,9 +266,6 @@ fn clean_english(raw: Vec<String>) -> Vec<String> {
         if ok && !out.iter().any(|o| o.eq_ignore_ascii_case(text)) {
             out.push(text.to_owned());
         }
-        if out.len() == MAX_SENSES {
-            break;
-        }
     }
     out
 }
@@ -299,9 +290,6 @@ fn clean_japanese(raw: Vec<RawJapanese>) -> Vec<JapaneseSense> {
             text: text.to_owned(),
             reading: reading.map(str::to_owned),
         });
-        if out.len() == MAX_SENSES {
-            break;
-        }
     }
     out
 }

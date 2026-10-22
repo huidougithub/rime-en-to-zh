@@ -49,7 +49,8 @@ fn run() -> Result<(), CliError> {
     let started = Instant::now();
     let mut engine = build_engine(&args)?;
     tracing::info!(total_ms = started.elapsed().as_millis(), "Engine 就绪");
-    engine.set_english_mode(args.english_mode);
+    engine.set_english_mode(args.english_mode || args.english_to_chinese);
+    engine.set_english_to_chinese(args.english_to_chinese);
     engine.set_chinese_first(args.chinese_first);
     engine.set_show_tones(args.show_tones);
     engine.set_emoji_limit(usize::from(args.emoji_limit));

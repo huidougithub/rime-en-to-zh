@@ -8,7 +8,9 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use qingjian_core::{Language, PartOfSpeech, Sense, Translation, Translator};
-use qingjian_format::{Container, Kind, Metadata, Table, Writer, hash};
+use qingjian_format::{
+    Container, FORMAT_VERSION, GLOSSARY_MULTISENSE_VERSION, Kind, Metadata, Table, Writer, hash,
+};
 
 use crate::error::GlossaryError;
 use entry_record::EntryRecord;
@@ -46,28 +48,8 @@ impl Glossary {
             if line.is_empty() || line.starts_with('#') {
                 continue;
             }
-            let number = index + 1;
-            let mut fields = line.split('\t').map(str::trim);
-            let text =
-                fields
-                    .next()
-                    .filter(|s| !s.is_empty())
-                    .ok_or_else(|| GlossaryError::Line {
-                        line: number,
-                        reason: "missing word".into(),
-                    })?;
-            let senses: Vec<Sense> = fields
-                .filter(|s| !s.is_empty())
-                .take(Translation::MAX_SENSES)
-                .map(parse_sense)
-                .collect();
-            if senses.is_empty() {
-                return Err(GlossaryError::Line {
-                    line: number,
-                    reason: "missing senses".into(),
-                });
-            }
-            entries.insert(text.to_owned(), Translation::new(language, senses));
+            let (text, translation) = parse_entry(language, line, index + 1)?;
+            entries.insert(text.to_owned(), translation);
         }
         tracing::debug!(
             language = language.code(),
@@ -98,17 +80,34 @@ impl Glossary {
         let senses: Table<SenseRecord> = container.table(SENSES_TAG)?;
         let index: Table<u32> = container.table(HASH_TAG)?;
         let in_arena = |start: u32, len: u16| {
-            text.get(start as usize..start as usize + usize::from(len))
-                .is_some()
+            let start = start as usize;
+            start
+                .checked_add(usize::from(len))
+                .is_some_and(|end| text.get(start..end).is_some())
         };
+        if entries.len() > u32::MAX as usize || senses.len() > u32::MAX as usize {
+            return Err(GlossaryError::Corrupt(
+                "entry or sense table exceeds 32-bit indices",
+            ));
+        }
         for entry in entries.iter() {
             if !in_arena(entry.word_start, entry.word_len)
-                || entry.sense_start as usize + usize::from(entry.sense_count) > senses.len()
+                || entry.sense_count == 0
+                || (entry.sense_start as usize)
+                    .checked_add(usize::from(entry.sense_count))
+                    .is_none_or(|end| end > senses.len())
             {
                 return Err(GlossaryError::Corrupt(
                     "entry points outside the arena or sense table",
                 ));
             }
+        }
+        if container.format_version() == FORMAT_VERSION
+            && entries.iter().any(|entry| entry.sense_count > 2)
+        {
+            return Err(GlossaryError::Corrupt(
+                "more than two senses require glossary format v2",
+            ));
         }
         for sense in senses.iter() {
             if !in_arena(sense.text_start, sense.text_len)
@@ -142,27 +141,49 @@ impl Glossary {
 
     /// 写成 `.qj`：词按字节序排，字符串进一个 arena，词条 / 释义各一张定长表，外加哈希索引。
     pub fn write_qj(&self, path: &Path, metadata: &Metadata) -> Result<(), GlossaryError> {
+        if self.len() > u32::MAX as usize {
+            return Err(GlossaryError::Limit("more than u32::MAX entries"));
+        }
         let mut words: Vec<(&str, Translation)> = self.all_entries();
         words.sort_by(|a, b| a.0.cmp(b.0));
         let mut arena = String::new();
-        let push = |arena: &mut String, s: &str| -> (u32, u16) {
-            let start = arena.len() as u32;
+        let push = |arena: &mut String, s: &str| -> Result<(u32, u16), GlossaryError> {
+            let start = u32::try_from(arena.len())
+                .map_err(|_| GlossaryError::Limit("string arena exceeds u32::MAX bytes"))?;
+            let len = u16::try_from(s.len())
+                .map_err(|_| GlossaryError::Limit("field exceeds u16::MAX UTF-8 bytes"))?;
+            if arena
+                .len()
+                .checked_add(s.len())
+                .is_none_or(|end| end > u32::MAX as usize)
+            {
+                return Err(GlossaryError::Limit("string arena exceeds u32::MAX bytes"));
+            }
             arena.push_str(s);
-            (start, s.len() as u16)
+            Ok((start, len))
         };
         let mut entries: Vec<EntryRecord> = Vec::with_capacity(words.len());
         let mut senses: Vec<SenseRecord> = Vec::new();
         for (word, translation) in &words {
-            let (word_start, word_len) = push(&mut arena, word);
-            let sense_start = senses.len() as u32;
+            validate_entry(word, translation.senses())?;
+            if senses
+                .len()
+                .checked_add(translation.senses().len())
+                .is_none_or(|end| end > u32::MAX as usize)
+            {
+                return Err(GlossaryError::Limit("sense table exceeds u32::MAX records"));
+            }
+            let (word_start, word_len) = push(&mut arena, word)?;
+            let sense_start = u32::try_from(senses.len())
+                .map_err(|_| GlossaryError::Limit("sense table exceeds u32::MAX records"))?;
             for sense in translation.senses() {
-                let (text_start, text_len) = push(&mut arena, &sense.text);
+                let (text_start, text_len) = push(&mut arena, &sense.text)?;
                 let (reading_start, reading_len) =
-                    push(&mut arena, sense.reading.as_deref().unwrap_or(""));
+                    push(&mut arena, sense.reading.as_deref().unwrap_or(""))?;
                 let (pos_start, pos_len) = push(
                     &mut arena,
                     sense.part_of_speech.map_or("", PartOfSpeech::abbreviation),
-                );
+                )?;
                 senses.push(SenseRecord {
                     text_start,
                     reading_start,
@@ -177,7 +198,8 @@ impl Glossary {
                 word_start,
                 sense_start,
                 word_len,
-                sense_count: translation.senses().len() as u16,
+                sense_count: u16::try_from(translation.senses().len())
+                    .map_err(|_| GlossaryError::Limit("more than u16::MAX senses per entry"))?,
             });
         }
         let index = hash::build(entries.len(), |id| {
@@ -193,7 +215,16 @@ impl Glossary {
             Table::Owned(senses),
             Table::Owned(index),
         );
+        let version = if words
+            .iter()
+            .any(|(_, translation)| translation.senses().len() > 2)
+        {
+            GLOSSARY_MULTISENSE_VERSION
+        } else {
+            FORMAT_VERSION
+        };
         Writer::new(Kind::Glossary, &metadata)?
+            .format_version(version)?
             .section(TEXT_TAG, arena.as_bytes())
             .section(ENTRIES_TAG, entries.as_bytes())
             .section(SENSES_TAG, senses.as_bytes())
@@ -267,6 +298,55 @@ impl Glossary {
     }
 }
 
+/// TSV 与个人释义共用的容量检查；边界来自现有二进制字段，不按少量义项截断。
+pub(crate) fn validate_entry(word: &str, senses: &[Sense]) -> Result<(), GlossaryError> {
+    if word.len() > u16::MAX as usize {
+        return Err(GlossaryError::Limit("word exceeds u16::MAX UTF-8 bytes"));
+    }
+    if senses.is_empty() || senses.len() > u16::MAX as usize {
+        return Err(GlossaryError::Limit(
+            "expected 1..=u16::MAX senses per entry",
+        ));
+    }
+    if senses.iter().any(|sense| {
+        sense.text.len() > u16::MAX as usize
+            || sense
+                .reading
+                .as_ref()
+                .is_some_and(|reading| reading.len() > u16::MAX as usize)
+    }) {
+        return Err(GlossaryError::Limit(
+            "sense or reading exceeds u16::MAX UTF-8 bytes",
+        ));
+    }
+    Ok(())
+}
+
+pub(crate) fn parse_entry(
+    language: Language,
+    line: &str,
+    number: usize,
+) -> Result<(&str, Translation), GlossaryError> {
+    let error = |reason: &str| GlossaryError::Line {
+        line: number,
+        reason: reason.to_owned(),
+    };
+    let mut fields = line.split('\t').map(str::trim);
+    let word = fields
+        .next()
+        .filter(|word| !word.is_empty())
+        .ok_or_else(|| error("missing word"))?;
+    let mut senses = Vec::new();
+    for field in fields.filter(|field| !field.is_empty()) {
+        if senses.len() == u16::MAX as usize {
+            return Err(error("more than u16::MAX senses per entry"));
+        }
+        senses.push(parse_sense(field));
+    }
+    validate_entry(word, &senses).map_err(|limit| error(&limit.to_string()))?;
+    Ok((word, Translation::new(language, senses)))
+}
+
 /// `v. develop` → 词性 + 译文；识别不出词性缩写时整段都是译文。译文后面 `|` 接的是读音（`n. 開発|かいはつ`）。
 pub(crate) fn parse_sense(field: &str) -> Sense {
     let (field, reading) = match field.split_once('|') {
@@ -311,81 +391,4 @@ impl Translator for Glossary {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn parses_up_to_two_senses_with_optional_part_of_speech() {
-        let glossary = Glossary::parse(
-            Language::English,
-            "# 注释\n开发\tv. develop\tn. development\tn. exploitation\n中文\tChinese language\n",
-        )
-        .unwrap();
-        let translation = glossary.translate("开发").unwrap();
-        assert_eq!(translation.language, Language::English);
-        assert_eq!(translation.senses().len(), 2);
-        assert_eq!(
-            translation.senses()[1].part_of_speech,
-            Some(PartOfSpeech::Noun)
-        );
-        assert_eq!(translation.senses()[1].text, "development");
-        let plain = glossary.translate("中文").unwrap();
-        assert_eq!(plain.senses()[0].part_of_speech, None);
-        assert_eq!(plain.senses()[0].text, "Chinese language");
-        assert!(glossary.translate("没有").is_none());
-    }
-
-    #[test]
-    fn japanese_senses_carry_kana_readings() {
-        let glossary = Glossary::parse(
-            Language::Japanese,
-            "开发\tv. 開発する|かいはつする\tn. 開発\n私\t私|わたし\n",
-        )
-        .unwrap();
-        let senses = glossary.translate("开发").unwrap().senses().to_vec();
-        assert_eq!(senses[0].text, "開発する");
-        assert_eq!(senses[0].reading.as_deref(), Some("かいはつする"));
-        let segments = senses[0].furigana();
-        assert_eq!(segments[0].text, "開発");
-        assert_eq!(segments[0].reading.as_deref(), Some("かいはつ"));
-        assert_eq!(segments[1].text, "する");
-        assert_eq!(senses[1].reading, None);
-        let plain = glossary.translate("私").unwrap();
-        assert_eq!(plain.senses()[0].part_of_speech, None);
-        assert_eq!(plain.senses()[0].reading.as_deref(), Some("わたし"));
-    }
-
-    #[test]
-    fn rejects_line_without_senses() {
-        let error = Glossary::parse(Language::English, "开发\n").unwrap_err();
-        assert!(matches!(error, GlossaryError::Line { line: 1, .. }));
-    }
-
-    #[test]
-    fn qj_round_trip_keeps_every_sense() {
-        let source = "开发\tv. develop\tv. exploit\n你好\tint. hello\n開発\tn. 開発|かいはつ\n";
-        let glossary = Glossary::parse(Language::English, source).unwrap();
-        let dir = std::env::temp_dir().join("qingjian-glossary-tests");
-        std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.join(format!("glossary-{}.qj", std::process::id()));
-        glossary
-            .write_qj(
-                &path,
-                &Metadata {
-                    name: "测试释义".to_owned(),
-                    ..Metadata::default()
-                },
-            )
-            .unwrap();
-        let mapped = Glossary::from_path(Language::English, &path).unwrap();
-        std::fs::remove_file(&path).unwrap();
-        assert_eq!(mapped.len(), 3);
-        for word in ["开发", "你好", "開発"] {
-            assert_eq!(mapped.translate(word), glossary.translate(word), "{word}");
-        }
-        assert_eq!(mapped.translate("没有"), None);
-        let senses = mapped.translate("開発").unwrap();
-        assert_eq!(senses.senses()[0].reading.as_deref(), Some("かいはつ"));
-        assert_eq!(senses.senses()[0].part_of_speech, Some(PartOfSpeech::Noun));
-    }
-}
+mod tests;

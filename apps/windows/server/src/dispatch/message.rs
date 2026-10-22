@@ -27,6 +27,7 @@ impl Router {
                         "DLL 与 Server 的协议版本不同（应用还没重启、用着旧 DLL？），照常服务"
                     );
                 }
+                self.receipts.discard(session);
                 // 同一会话重开（DLL 断线重连）：从干净状态起。
                 if self.focused == Some(session) {
                     self.reset_composition();
@@ -50,11 +51,19 @@ impl Router {
                     input: self.input_settings(session),
                 })
             }
+            ClientMessage::CommitApplied {
+                session,
+                receipt,
+                applied,
+            } => {
+                self.confirm_commit(session, receipt, applied);
+                None
+            }
             ClientMessage::Key { session, event } => Some(self.handle_key(session, event)),
             ClientMessage::Poll { session } => Some(self.handle_poll(session)),
             ClientMessage::Commit { session } => {
                 let text = self.commit_raw_for(session);
-                tracing::debug!(?session, ?text, "焦点离开，结束组句");
+                tracing::debug!(?session, "焦点离开，结束组句");
                 Some(ServerMessage::Committed { session, text })
             }
             ClientMessage::Surrounding { session, text } => {
@@ -113,6 +122,7 @@ impl Router {
                 None
             }
             ClientMessage::CloseSession { session } => {
+                self.receipts.discard(session);
                 self.sessions.remove(&session);
                 if self.mode_session == Some(session) {
                     self.mode_session = None;
@@ -160,6 +170,7 @@ impl Router {
             Effect::Navigated => (None, KeyOutcome::Consumed),
             Effect::Passthrough => (None, KeyOutcome::Passthrough),
         };
+        self.capture_translation_choice(session);
         // 点击上屏的字还没等到轮询就来了键：接在这次结果前面，免得丢
         let commit = match (self.take_clicked(session), commit) {
             (Some(clicked), commit) => Some(clicked + commit.as_deref().unwrap_or_default()),
@@ -171,10 +182,12 @@ impl Router {
         // 自绘窗吃未降级的帧；发给 DLL 的那份按老协议降级（见 composed 的 current_frame）
         let shown = self.self_drawn_frame();
         self.reconcile_candidates(&shown);
+        let commit_receipt = self.issue_commit_receipt(session, commit.is_some());
         ServerMessage::KeyResult {
             session,
             outcome,
             commit,
+            commit_receipt,
             frame: self.current_frame(),
         }
     }
@@ -194,10 +207,13 @@ impl Router {
         } else {
             Frame::default()
         };
+        let commit = self.take_clicked(session);
+        let commit_receipt = self.issue_commit_receipt(session, commit.is_some());
         ServerMessage::Update {
             session,
             frame,
-            commit: self.take_clicked(session),
+            commit,
+            commit_receipt,
         }
     }
 }

@@ -7,6 +7,9 @@ pub(super) enum Next {
         /// 本次要立即上屏的文本。
         commit: Option<String>,
 
+        /// 只有文档写入成功才确认的编号。
+        receipt: Option<u64>,
+
         /// 组句拼音行；空串表示收组句。
         preedit: String,
 
